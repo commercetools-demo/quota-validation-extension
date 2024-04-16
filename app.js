@@ -230,9 +230,12 @@ app.post("/validate-cart", async (req, res) => {
 
     try {
       console.log("Fetching rules for ", objectKey);
-      response = await fetchCt(`custom-objects/${objectKey}/${storeKey}`, {
-        method: "GET",
-      })
+      response = await fetchCt(
+        `custom-objects/${objectKey}-cart-rules/${storeKey}`,
+        {
+          method: "GET",
+        }
+      )
         .then((response) => response.json())
         .then((response) => {
           //console.log(response);
