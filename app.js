@@ -61,7 +61,7 @@ const applyCategoryRules = async (
         console.log("LineItem Qty:", lineQty);
         console.log("Quota exceeded? ", lineQty > totalValue);
         if (lineQty > totalValue) {
-          errorFound = true;
+          return true;
         }
       } else if (criteria === "value") {
         console.log(
@@ -84,8 +84,6 @@ const applyCategoryRules = async (
           );
           return false;
         }
-
-        return errorFound;
       }
     })
     .catch((error) => {
@@ -304,7 +302,7 @@ app.post("/validate-cart", async (req, res) => {
 
     let productErrorFound = false;
 
-    if (!errorFound && storeKey !== "") {
+    if (!errorFound) {
       for (const rule of productRules) {
         if (!productErrorFound) {
           ruleFlag = rule;
@@ -323,13 +321,23 @@ app.post("/validate-cart", async (req, res) => {
               criteria: rule.criteria,
               equals: rule.equals.categoryName["en-US"],
             };
-            productErrorFound = await applyCategoryRules(
-              lineItems,
-              rule.equals.categoryId,
-              rule.criteria,
-              rule.value
-            );
+            await new Promise((resolve, reject) => {
+              applyCategoryRules(
+                lineItems,
+                rule.equals.categoryId,
+                rule.criteria,
+                rule.value
+              )
+                .then((result) => {
+                  console.log(result);
+                  productErrorFound = result;
+                  resolve();
+                })
+                .catch((error) => reject(error));
+            });
           }
+          console.log("Error found:");
+          console.log(productErrorFound);
           if (rule.type === "flag") {
             ruleFlag = rule;
             productErrorFound = applyFlagRules(
